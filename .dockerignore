@@ -3,3 +3,6 @@
 !build/*-runner.jar
 !build/lib/*
 !build/quarkus-app/*
+!src/main/webui/node_modules
+!src/main/webui/.svelte-kit
+!src/main/webui/build

@@ -19,10 +19,9 @@ dependencies {
     implementation("io.quarkus:quarkus-mutiny")
     implementation("io.quarkus:quarkus-rest-client")
     implementation("io.quarkus:quarkus-rest")
+    implementation("io.quarkus:quarkus-rest-jackson")
     implementation("io.quarkiverse.openapi.generator:quarkus-openapi-generator:2.5.0")
     implementation("io.quarkus:quarkus-vertx")
-//    implementation("io.quarkiverse.langchain4j:quarkus-langchain4j-easy-rag:0.20.3")
-//    implementation("io.quarkiverse.langchain4j:quarkus-langchain4j-openai:0.20.3")
     implementation("io.quarkus:quarkus-rest-client-kotlin-serialization")
     implementation("io.quarkus:quarkus-kotlin")
     implementation("io.quarkus:quarkus-hibernate-reactive-panache-kotlin")
@@ -31,11 +30,10 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("io.quarkus:quarkus-arc")
     implementation("io.quarkus:quarkus-oidc-client")
-// https://mvnrepository.com/artifact/com.aallam.openai/openai-client
     implementation("com.aallam.openai:openai-client:3.8.2")
-// https://mvnrepository.com/artifact/io.ktor/ktor-client-okhttp-jvm
     runtimeOnly("io.ktor:ktor-client-okhttp-jvm:2.3.12")
 
+    implementation("io.quarkiverse.quinoa:quarkus-quinoa:2.5.0")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("org.mockito:mockito-core")
     testImplementation("io.rest-assured:rest-assured")
