@@ -31,6 +31,11 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("io.quarkus:quarkus-arc")
     implementation("io.quarkus:quarkus-oidc-client")
+// https://mvnrepository.com/artifact/com.aallam.openai/openai-client
+    implementation("com.aallam.openai:openai-client:3.8.2")
+// https://mvnrepository.com/artifact/io.ktor/ktor-client-okhttp-jvm
+    runtimeOnly("io.ktor:ktor-client-okhttp-jvm:2.3.12")
+
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("org.mockito:mockito-core")
     testImplementation("io.rest-assured:rest-assured")
