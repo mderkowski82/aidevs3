@@ -1,5 +1,6 @@
 package pl.npesystem.aidevs
 
+import com.aallam.openai.api.model.Model
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import jakarta.ws.rs.core.Response
@@ -33,5 +34,15 @@ class TaskService {
         val taskAnswerString = TaskAnswerString("robotid", aidevsKey, generateImageUrl)
         val verifyTask = centralaClient.verifyTask(taskAnswerString)
         return verifyTask
+    }
+
+    fun task24(): TaskResponse {
+        val processTask24 = aiDevsService.processTask24()
+        println(processTask24)
+        return TaskResponse(0,"")
+    }
+
+    fun listModels(): List<Model> {
+        return openAiService.getModels()
     }
 }

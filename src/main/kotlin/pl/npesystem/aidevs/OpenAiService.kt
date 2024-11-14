@@ -1,13 +1,23 @@
 package pl.npesystem.aidevs
 
+import com.aallam.openai.api.audio.TranscriptionRequest
+import com.aallam.openai.api.chat.*
+import com.aallam.openai.api.file.FileSource
 import com.aallam.openai.api.image.ImageCreation
 import com.aallam.openai.api.image.ImageSize
+import com.aallam.openai.api.logging.LogLevel
+import com.aallam.openai.api.model.Model
 import com.aallam.openai.api.model.ModelId
+import com.aallam.openai.client.LoggingConfig
 import com.aallam.openai.client.OpenAI
 import jakarta.inject.Singleton
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import org.eclipse.microprofile.config.inject.ConfigProperty
+import java.io.File
+import java.util.*
 
 @Singleton
 class OpenAiService(
@@ -20,7 +30,7 @@ class OpenAiService(
         isLenient = true
         ignoreUnknownKeys = true
     }
-    val openAI = OpenAI(openaiKey)
+    val openAI = OpenAI(openaiKey, logging = LoggingConfig(LogLevel.None))
 
 
     fun generateImage(description: String): String {
@@ -36,5 +46,139 @@ class OpenAiService(
             return@runBlocking images[0].url
         }
     }
+
+    private fun messageImage(prompt: String, system: String, files: List<File>): String {
+
+        val reqList: ArrayList<ContentPart> = ArrayList<ContentPart>()
+        reqList.add(TextPart(prompt))
+
+        files.map { file ->
+            FileSystem.SYSTEM.read(file.path.toPath()) {
+                val fileAsBase64 = Base64.getEncoder().encodeToString(file.readBytes())
+                reqList.add(ImagePart("data:image/${file.extension};base64,$fileAsBase64"))
+            }
+        }
+
+        return runBlocking {
+            val chatCompletionRequest = ChatCompletionRequest(
+                model = ModelId("gpt-4o"),
+                messages = listOf(
+                    ChatMessage(
+                        role = ChatRole.System,
+                        content = system
+                    ),
+                    ChatMessage(
+                        role = ChatRole.User,
+                        content = reqList,
+                    )
+                )
+            )
+            val chatCompletion = openAI.chatCompletion(chatCompletionRequest)
+            return@runBlocking chatCompletion.choices.last().message.content ?: ""
+        }
+    }
+
+    private fun message(prompt: String, system: String): String {
+
+        return runBlocking {
+            val chatCompletionRequest = ChatCompletionRequest(
+                model = ModelId("gpt-4o"),
+                messages = listOf(
+                    ChatMessage(
+                        role = ChatRole.System,
+                        content = system
+                    ),
+                    ChatMessage(
+                        role = ChatRole.User,
+                        content = prompt,
+                    )
+                )
+            )
+            val chatCompletion = openAI.chatCompletion(chatCompletionRequest)
+            return@runBlocking chatCompletion.choices.last().message.content ?: ""
+        }
+    }
+
+    private fun transcribe(file: File) = runBlocking {
+        val request = TranscriptionRequest(
+            audio = FileSource(file.name, FileSystem.SYSTEM.source(file.path.toPath())),
+            model = ModelId("whisper-1"),
+            language = "en"
+        )
+        val transcription = openAI.transcription(request)
+        transcription.text
+    }
+
+    fun processFileInTask24(it: File): String {
+        return when (it.extension.lowercase(Locale.getDefault())) {
+            "txt" -> {
+                val message = message(
+                    """
+                    Przeanalizuj tekst użytkownika i zaklasyfikuj go do jednej z trzech kategorii.
+                    HARDWARE - jeśli jest o maszynach itp.
+                    PEOPLE - jeśli jest o ludziach, osobach itp.
+                    OTHER - jeśli nie zalicza się do kategorii HARDWARE i PEOPLE
+                    ZWRÓĆ TYLKO KATEGORIE I NIC WIĘCEJ
+                """.trimIndent(),
+                    it.readText()
+                )
+                println("Processing text file: ${it.name} -> $message")
+                println(it.readText())
+                message
+                ""
+            }
+
+            "jpg", "jpeg", "png" -> {
+                val messageImage = messageImage(
+                    """
+                    Przeanalizuj zdjęcie użytkownika.
+                    Opisz dokładnie co na nim jest i czego dotyczy.
+                """.trimIndent(),
+                    "",
+                    listOf(it)
+                )
+                println("Processing image file: ${it.name} -> $messageImage")
+                val message = message(
+                    messageImage, """
+                    Przeanalizuj tekst użytkownika i zaklasyfikuj go do jednej z trzech kategorii.
+                    HARDWARE - jeśli jest o maszynach itp.
+                    PEOPLE - jeśli jest o ludziach, osobach itp.
+                    OTHER - jeśli nie zalicza się do kategorii HARDWARE i PEOPLE
+                    ZWRÓĆ TYLKO KATEGORIE I NIC WIĘCEJ
+                """.trimIndent()
+                )
+                println("DECYZJA: $message")
+                message
+            }
+
+            "mp3" -> {
+                val transcribe = transcribe(it)
+                val message = message(
+                    """
+                    Przeanalizuj tekst użytkownika i zaklasyfikuj go do jednej z trzech kategorii.
+                    HARDWARE - jeśli jest o maszynach itp.
+                    PEOPLE - jeśli jest o ludziach, osobach itp.
+                    OTHER - jeśli nie zalicza się do kategorii HARDWARE i PEOPLE
+                    ZWRÓĆ TYLKO KATEGORIE I NIC WIĘCEJ
+                """.trimIndent(),
+                    transcribe
+                )
+                println("Processing audio file: ${it.name} -> $message")
+                println(transcribe)
+                message
+                ""
+            }
+
+            else -> {
+                // Process unknown file type
+                println("Unknown file type: ${it.name}")
+                // Add your processing logic here
+                it.name
+            }
+        }
+    }
+
+    fun getModels(): List<Model> = runBlocking { openAI.models() }
+
 
 }

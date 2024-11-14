@@ -1,10 +1,12 @@
 package pl.npesystem
 
+import CustomErrorHandler
 import jakarta.ws.rs.GET
 import jakarta.ws.rs.POST
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient
 import jakarta.ws.rs.Path
 import jakarta.ws.rs.Produces
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider
 import org.jboss.resteasy.reactive.RestPath
 import pl.npesystem.aidevs.client.DescriptionResponse
 import pl.npesystem.aidevs.client.TaskAnswer
@@ -24,6 +26,7 @@ import pl.npesystem.aidevs.client.TaskResponse
  * ```
  */
 @RegisterRestClient(baseUri = "https://centrala.ag3nts.org")
+@RegisterProvider(CustomErrorHandler::class)
 interface CentralaClient {
 
     @GET
