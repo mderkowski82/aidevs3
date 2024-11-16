@@ -114,18 +114,30 @@ class OpenAiService(
             "txt" -> {
                 val message = message(
                     """
-                    Przeanalizuj tekst użytkownika i zaklasyfikuj go do jednej z trzech kategorii.
-                    HARDWARE - jeśli jest o maszynach itp.
-                    PEOPLE - jeśli jest o ludziach, osobach itp.
-                    OTHER - jeśli nie zalicza się do kategorii HARDWARE i PEOPLE
-                    ZWRÓĆ TYLKO KATEGORIE I NIC WIĘCEJ
+<Cel>
+Analiza danych tekstowych i klasyfikacja fragmentów informacji na trzy kategorie:
+</Cel>
+<DANE>
+PEOPLE – raporty o schwytanych osobach lub śladach ich obecności.
+HARDWARE – raporty o naprawionych usterkach sprzętowych (nie związanych z oprogramowaniem).
+OTHER – wszystko, co nie pasuje do powyższych kategorii, w tym katalog faktów, raporty techniczne niezwiązane z ludźmi i sprzętem.
+</DANE>
+<Instrukcja>
+Otrzymasz różne wiadomości użytkownika. Twoim zadaniem jest:
+
+Analiza każdego fragmentu tekstu.
+Klasyfikacja fragmentu jako PERSON, HARDWARE lub OTHER.
+NIE UWZGLĘDNIAJ informacji o personelu i rutynowych czynnościach"
+Zwrócenie wyniku tylko w postaci KATEGORII.
+</Instrukcja>
                 """.trimIndent(),
-                    it.readText()
+                    """<DANE_DO_ANALIZY>
+                     ${it.readText()}
+                     </DANE_DO_ANALIZY>""".trimMargin()
                 )
                 println("Processing text file: ${it.name} -> $message")
-                println(it.readText())
+//                println(it.readText())
                 message
-                ""
             }
 
             "jpg", "jpeg", "png" -> {
@@ -137,17 +149,28 @@ class OpenAiService(
                     "",
                     listOf(it)
                 )
-                println("Processing image file: ${it.name} -> $messageImage")
+//                println("Processing image file: ${it.name} -> $messageImage")
                 val message = message(
                     messageImage, """
-                    Przeanalizuj tekst użytkownika i zaklasyfikuj go do jednej z trzech kategorii.
-                    HARDWARE - jeśli jest o maszynach itp.
-                    PEOPLE - jeśli jest o ludziach, osobach itp.
-                    OTHER - jeśli nie zalicza się do kategorii HARDWARE i PEOPLE
-                    ZWRÓĆ TYLKO KATEGORIE I NIC WIĘCEJ
+<Cel>
+Analiza danych tekstowych i klasyfikacja fragmentów informacji na trzy kategorie:
+</Cel>
+<DANE>
+PEOPLE – raporty o schwytanych osobach lub śladach ich obecności.
+HARDWARE – raporty o naprawionych usterkach sprzętowych (nie związanych z oprogramowaniem).
+OTHER – wszystko, co nie pasuje do powyższych kategorii, w tym katalog faktów, raporty techniczne niezwiązane z ludźmi i sprzętem.
+</DANE>
+<Instrukcja>
+Otrzymasz różne raporty w formacie tekstowym. Twoim zadaniem jest:
+
+Analiza każdego fragmentu tekstu.
+Klasyfikacja fragmentu jako PERSON, HARDWARE lub OTHER.
+NIE UWZGLĘDNIAJ informacji o personelu i rutynowych czynnościach"
+Zwrócenie wyniku tylko w postaci KATEGORII.
+</Instrukcja>
                 """.trimIndent()
                 )
-                println("DECYZJA: $message")
+                println("Processing image file: ${it.name} -> $message")
                 message
             }
 
@@ -155,19 +178,29 @@ class OpenAiService(
                 val transcribe = transcribe(it)
                 val message = message(
                     """
-                    Przeanalizuj tekst użytkownika i zaklasyfikuj go do jednej z trzech kategorii.
-                    HARDWARE - jeśli jest o maszynach itp.
-                    PEOPLE - jeśli jest o ludziach, osobach itp.
-                    OTHER - jeśli nie zalicza się do kategorii HARDWARE i PEOPLE
-                    ZWRÓĆ TYLKO KATEGORIE I NIC WIĘCEJ
+<Cel>
+Analiza danych tekstowych i klasyfikacja fragmentów informacji na trzy kategorie:
+</Cel>
+<DANE>
+PEOPLE – raporty o schwytanych osobach lub śladach ich obecności.
+HARDWARE – raporty o naprawionych usterkach sprzętowych (nie związanych z oprogramowaniem).
+OTHER – wszystko, co nie pasuje do powyższych kategorii, w tym katalog faktów, raporty techniczne niezwiązane z ludźmi i sprzętem.
+</DANE>
+<Instrukcja>
+Otrzymasz różne raporty w formacie tekstowym. Twoim zadaniem jest:
+
+Analiza każdego fragmentu tekstu.
+Klasyfikacja fragmentu jako PERSON, HARDWARE lub OTHER.
+NIE UWZGLĘDNIAJ informacji o personelu i rutynowych czynnościach"
+Zwrócenie wyniku tylko w postaci KATEGORII.
+</Instrukcja>
                 """.trimIndent(),
                     transcribe
                 )
                 println("Processing audio file: ${it.name} -> $message")
-                println(transcribe)
+//                println(transcribe)
                 message
-                ""
-            }
+              }
 
             else -> {
                 // Process unknown file type
