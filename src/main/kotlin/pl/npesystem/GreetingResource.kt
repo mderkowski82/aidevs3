@@ -29,9 +29,19 @@ class GreetingResource(private val aiDevsService: AiDevsService, private val tas
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
+    @Path("/task25")
+    fun task25() = taskService.task25()
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
     @Path("/models")
     fun getModels(): List<Model> {
         return taskService.listModels()
     }
+
+    @GET
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("/testImage")
+    fun testImage() = taskService.testImage()
 
 }

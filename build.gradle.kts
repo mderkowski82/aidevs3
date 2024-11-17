@@ -32,9 +32,18 @@ dependencies {
     implementation("io.quarkus:quarkus-arc")
     implementation("io.quarkus:quarkus-oidc-client")
 // https://mvnrepository.com/artifact/com.aallam.openai/openai-client
-    implementation("com.aallam.openai:openai-client:3.8.2")
+    implementation("com.aallam.openai:openai-client:4.0.0-beta01")
+// https://mvnrepository.com/artifact/com.squareup.okio/okio
+    implementation("com.squareup.okio:okio:3.9.1")
+
 // https://mvnrepository.com/artifact/io.ktor/ktor-client-okhttp-jvm
-    runtimeOnly("io.ktor:ktor-client-okhttp-jvm:2.3.12")
+    runtimeOnly("io.ktor:ktor-client-okhttp-jvm:3.0.1")
+// https://mvnrepository.com/artifact/io.ktor/ktor-client-core
+//    implementation("io.ktor:ktor-client-okhttp:3.0.1")
+//    implementation("io.ktor:ktor-client-core:3.0.1")
+// https://mvnrepository.com/artifact/io.ktor/ktor-client-core
+//    runtimeOnly("io.ktor:ktor-client-core:3.0.1")
+
 
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("org.mockito:mockito-core")

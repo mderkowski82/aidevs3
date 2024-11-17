@@ -12,12 +12,14 @@ import com.aallam.openai.client.LoggingConfig
 import com.aallam.openai.client.OpenAI
 import jakarta.inject.Singleton
 import kotlinx.coroutines.runBlocking
+import kotlinx.io.files.Path
 import kotlinx.serialization.json.Json
-import okio.FileSystem
-import okio.Path.Companion.toPath
+
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import java.io.File
 import java.util.*
+import kotlin.collections.ArrayList
+
 
 @Singleton
 class OpenAiService(
@@ -47,16 +49,14 @@ class OpenAiService(
         }
     }
 
-    private fun messageImage(prompt: String, system: String, files: List<File>): String {
+    fun messageImage(prompt: String, system: String, files: List<File>): String {
 
         val reqList: ArrayList<ContentPart> = ArrayList<ContentPart>()
         reqList.add(TextPart(prompt))
 
-        files.map { file ->
-            FileSystem.SYSTEM.read(file.path.toPath()) {
-                val fileAsBase64 = Base64.getEncoder().encodeToString(file.readBytes())
-                reqList.add(ImagePart("data:image/${file.extension};base64,$fileAsBase64"))
-            }
+        files.map {
+            val fileAsBase64 = Base64.getEncoder().encodeToString(it.readBytes())
+            reqList.add(ImagePart("data:image/${it.extension};base64,$fileAsBase64"))
         }
 
         return runBlocking {
@@ -78,7 +78,7 @@ class OpenAiService(
         }
     }
 
-    private fun message(prompt: String, system: String): String {
+    fun message(prompt: String, system: String): String {
 
         return runBlocking {
             val chatCompletionRequest = ChatCompletionRequest(
@@ -100,8 +100,9 @@ class OpenAiService(
     }
 
     private fun transcribe(file: File) = runBlocking {
+        val toPath = Path(file.path)
         val request = TranscriptionRequest(
-            audio = FileSource(file.name, FileSystem.SYSTEM.source(file.path.toPath())),
+            audio = FileSource(toPath),
             model = ModelId("whisper-1"),
             language = "en"
         )
@@ -109,106 +110,49 @@ class OpenAiService(
         transcription.text
     }
 
-    fun processFileInTask24(it: File): String {
+    fun processFileWithAi(it: File, instruction: String, additionalInfo: String): String {
+
         return when (it.extension.lowercase(Locale.getDefault())) {
             "txt" -> {
-                val message = message(
-                    """
-<Cel>
-Analiza danych tekstowych i klasyfikacja fragmentów informacji na trzy kategorie:
-</Cel>
-<DANE>
-PEOPLE – raporty o schwytanych osobach lub śladach ich obecności.
-HARDWARE – raporty o naprawionych usterkach sprzętowych (nie związanych z oprogramowaniem).
-OTHER – wszystko, co nie pasuje do powyższych kategorii, w tym katalog faktów, raporty techniczne niezwiązane z ludźmi i sprzętem.
-</DANE>
-<Instrukcja>
-Otrzymasz różne wiadomości użytkownika. Twoim zadaniem jest:
-
-Analiza każdego fragmentu tekstu.
-Klasyfikacja fragmentu jako PERSON, HARDWARE lub OTHER.
-NIE UWZGLĘDNIAJ informacji o personelu i rutynowych czynnościach"
-Zwrócenie wyniku tylko w postaci KATEGORII.
-</Instrukcja>
-                """.trimIndent(),
-                    """<DANE_DO_ANALIZY>
-                     ${it.readText()}
-                     </DANE_DO_ANALIZY>""".trimMargin()
-                )
-                println("Processing text file: ${it.name} -> $message")
-//                println(it.readText())
-                message
+                val dataToAnalyze = """<DANE_DO_ANALIZY>
+                    |${it.readText()}
+                    |</DANE_DO_ANALIZY>
+                    |DODATKOWE INFORMACJE:
+                    |$additionalInfo
+                    |""".trimMargin()
+                val message = createMessageForAnalysis(instruction, dataToAnalyze)
+                logProcessing("text file", it.name, message)
             }
-
             "jpg", "jpeg", "png" -> {
                 val messageImage = messageImage(
                     """
-                    Przeanalizuj zdjęcie użytkownika.
-                    Opisz dokładnie co na nim jest i czego dotyczy.
-                """.trimIndent(),
-                    "",
-                    listOf(it)
+                Przeanalizuj zdjęcie użytkownika.
+                Opisz dokładnie co na nim jest i czego dotyczy.
+                Jeśli to zdjęcie przedstawiające miejsce opisz je. nie zwracaj miasta tylko opis.
+            """.trimIndent(), "", listOf(it)
                 )
-//                println("Processing image file: ${it.name} -> $messageImage")
-                val message = message(
-                    messageImage, """
-<Cel>
-Analiza danych tekstowych i klasyfikacja fragmentów informacji na trzy kategorie:
-</Cel>
-<DANE>
-PEOPLE – raporty o schwytanych osobach lub śladach ich obecności.
-HARDWARE – raporty o naprawionych usterkach sprzętowych (nie związanych z oprogramowaniem).
-OTHER – wszystko, co nie pasuje do powyższych kategorii, w tym katalog faktów, raporty techniczne niezwiązane z ludźmi i sprzętem.
-</DANE>
-<Instrukcja>
-Otrzymasz różne raporty w formacie tekstowym. Twoim zadaniem jest:
-
-Analiza każdego fragmentu tekstu.
-Klasyfikacja fragmentu jako PERSON, HARDWARE lub OTHER.
-NIE UWZGLĘDNIAJ informacji o personelu i rutynowych czynnościach"
-Zwrócenie wyniku tylko w postaci KATEGORII.
-</Instrukcja>
-                """.trimIndent()
-                )
-                println("Processing image file: ${it.name} -> $message")
-                message
+                val message = createMessageForAnalysis(messageImage, instruction)
+                logProcessing("image file", it.name, message)
             }
-
             "mp3" -> {
-                val transcribe = transcribe(it)
-                val message = message(
-                    """
-<Cel>
-Analiza danych tekstowych i klasyfikacja fragmentów informacji na trzy kategorie:
-</Cel>
-<DANE>
-PEOPLE – raporty o schwytanych osobach lub śladach ich obecności.
-HARDWARE – raporty o naprawionych usterkach sprzętowych (nie związanych z oprogramowaniem).
-OTHER – wszystko, co nie pasuje do powyższych kategorii, w tym katalog faktów, raporty techniczne niezwiązane z ludźmi i sprzętem.
-</DANE>
-<Instrukcja>
-Otrzymasz różne raporty w formacie tekstowym. Twoim zadaniem jest:
-
-Analiza każdego fragmentu tekstu.
-Klasyfikacja fragmentu jako PERSON, HARDWARE lub OTHER.
-NIE UWZGLĘDNIAJ informacji o personelu i rutynowych czynnościach"
-Zwrócenie wyniku tylko w postaci KATEGORII.
-</Instrukcja>
-                """.trimIndent(),
-                    transcribe
-                )
-                println("Processing audio file: ${it.name} -> $message")
-//                println(transcribe)
-                message
-              }
-
+                val transcribedText = transcribe(it)
+                val message = createMessageForAnalysis(instruction, transcribedText)
+                logProcessing("audio file", it.name, message)
+            }
             else -> {
-                // Process unknown file type
                 println("Unknown file type: ${it.name}")
-                // Add your processing logic here
                 it.name
             }
         }
+    }
+
+    private fun createMessageForAnalysis(system: String, user: String): String {
+        return message(system, user)
+    }
+
+    private fun logProcessing(fileType: String, fileName: String, message: String): String {
+        println("Processing $fileType: $fileName -> $message")
+        return message
     }
 
     fun getModels(): List<Model> = runBlocking { openAI.models() }

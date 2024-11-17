@@ -3,10 +3,8 @@ package pl.npesystem.aidevs
 import com.aallam.openai.api.model.Model
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
-import jakarta.ws.rs.core.Response
 import org.eclipse.microprofile.config.inject.ConfigProperty
 import org.eclipse.microprofile.rest.client.inject.RestClient
-import pl.npesystem.AiDevsClient
 import pl.npesystem.CentralaClient
 import pl.npesystem.aidevs.client.TaskAnswerString
 import pl.npesystem.aidevs.client.TaskResponse
@@ -39,10 +37,22 @@ class TaskService {
     fun task24(): TaskResponse {
         val processTask24 = aiDevsService.processTask24()
         println(processTask24)
-        return TaskResponse(0,"")
+        return processTask24
     }
 
     fun listModels(): List<Model> {
         return openAiService.getModels()
+    }
+
+    fun task25(): TaskResponse {
+        val task25Question = aiDevsService.getTask25Question()
+
+        val processTask25 = aiDevsService.processTask25(task25Question)
+
+        return processTask25
+    }
+
+    fun testImage(): String {
+        return aiDevsService.testImage()
     }
 }

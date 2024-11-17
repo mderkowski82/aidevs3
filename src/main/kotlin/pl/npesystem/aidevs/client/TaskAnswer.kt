@@ -24,6 +24,12 @@ data class TaskAnswerMapStringListString(
     @Contextual val answer: Map<String, List<String>>
 ) : TaskAnswer()
 
+@Serializable
+data class TaskAnswerMapStringString(
+    override val task: String,
+    override val apikey: String,
+    @Contextual val answer: Map<String, String>
+) : TaskAnswer()
 
 @Serializable
 data class TaskAnswerString(

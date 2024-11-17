@@ -34,6 +34,11 @@ interface CentralaClient {
     @Produces("application/json")
     fun getRobotDescription(@RestPath apiKey: String): DescriptionResponse
 
+    @GET
+    @Path("/data/{apiKey}/arxiv.txt")
+    @Produces("application/json")
+    fun getTask25Question(@RestPath apiKey: String): String
+
     @POST
     @Path("/verify")
     @Produces("application/json")
