@@ -4,6 +4,7 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import kotlinx.coroutines.runBlocking
@@ -162,7 +163,7 @@ class AiDevsService {
                 it.value,
 """
 ODPOWIADAJ NA PYTANIA UŻYTKOWNIKA JEDNYM ZDANIEM ZGODNIE Z CONTEXTEM
-
+Weź pod uwagę opisy pod plikami, są bardzo ważne.
 <CONTEXT>
 $markdown
 </CONTEXT>
